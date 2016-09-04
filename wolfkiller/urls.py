@@ -21,6 +21,6 @@ from wechat import views as wecha_views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^wechat', wecha_views.index),
-    url(r'^phone', phone_views.index)
+    url(r'^wechat/', wecha_views.index),
+    url(r'^phone/', phone_views.index)
 ]
