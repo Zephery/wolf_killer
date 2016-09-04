@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from type import RoomStatus, WinModel, Role
-
+from userinfo.models import User
 # Create your models here.
 
 class Room(models.Model):
@@ -29,7 +29,7 @@ class Game(models.Model):
 
 class Identity(models.Model):
     game = models.ForeignKey(Game, verbose_name=u'对应游戏')
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, verbose_name=u'对应的用户')
     role = models.IntegerField(verbose_name=u'角色')
 
 
