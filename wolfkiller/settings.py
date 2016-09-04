@@ -78,8 +78,12 @@ WSGI_APPLICATION = 'wolfkiller.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'WolfKiller',
+        'USER': 'root',
+        'PASSWORD': 'L&j&X7596',
+        'HOST': '123.207.137.201',
+        'PORT': '3306'
     },
 }
 

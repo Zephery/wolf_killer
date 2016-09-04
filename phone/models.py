@@ -9,7 +9,7 @@ from type import RoomStatus, WinModel, Role
 class Room(models.Model):
     headcount = models.IntegerField(verbose_name=u'房间大小', default=9)
 
-    wolf = models.IntegerField(verbose_name=u'狼人', default=3)
+    wolf = models.IntegerField(maxverbose_name=u'狼人', default=3)
     civilian = models.IntegerField(verbose_name=u'平民', default=3)
     god = models.IntegerField(verbose_name=u'神', default=3)
 
