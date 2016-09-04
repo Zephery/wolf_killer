@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'wechat',
-    'userinfo',
+    'phone',
     'bootstrap_toolkit',
 ]
 
