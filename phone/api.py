@@ -54,9 +54,9 @@ def get_room_status(room):
 
 def is_in_room(user):
     obj = Identity.objects.filter(user=user)
-    if obj.count() > 0:
+    if obj[0]:
         user_list = []
-        other_user = Identity.objects.filter(game=obj[0].game)
+        other_user = Identity.objects.filter(game_id=obj[0].game_id)
         for item in other_user:
             user_list.append(str(item.user.username)+', ')
         return obj[0].game.current_headcount, obj[0].game.room.id, obj[0].user.username, user_list

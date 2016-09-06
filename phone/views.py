@@ -210,26 +210,26 @@ def role(request):
         user = request.session['username']
         r, game_status, role_status = get_role(user)
         num, room, username, other = is_in_room(request.user)
-        r_name = ROLE_NAME[r]
 
         if game_status==RoomStatus.DAY:
             deth = get_deth_people(request.user)
             return render_to_response(
             'gaming.html',
             {'deth_people':u'作夜'+str(deth)+u'死亡',
-             'role': r_name, 'user':user,
-             'game_status' :ROOM_STATUS(game_status),
-             'role_status':ROLE_STATUS_NAME(role_status),
+             'role': ROLE_NAME[r], 'user':user,
+             'game_status' :ROOM_STATUS[game_status],
+             'role_status':ROLE_STATUS_NAME[role_status],
              'other_user':other})
         else:
             return render_to_response(
             'gaming.html',
-            {'role': r_name, 'user':user,
-             'game_status' :ROOM_STATUS(game_status),
-             'role_status':ROLE_STATUS_NAME(role_status),
+            {'role':ROLE_NAME[r], 'user':user,
+             'game_status' :ROOM_STATUS[game_status],
+             'role_status':ROLE_STATUS_NAME[role_status],
              'other_user':other})
 
-    except:
+    except Exception,e:
+        print(e)
         return HttpResponseRedirect('/phone/index/')
 
 # 杀人
@@ -247,12 +247,17 @@ def kill_people(request):
                     error = [info]
                     return render_to_response(
                         'killer_gaming.html',
-                        {'role': r_name, 'user':user, 'game_status' : ROOM_STATUS[game_status], 'role_status':ROLE_STATUS_NAME(role_status),'error':error})
+                        {
+                            'role': r_name,
+                            'user':user, 'game_status' : ROOM_STATUS[game_status],
+                            'role_status':ROLE_STATUS_NAME[role_status],'error':error})
             else:
 
                 return render_to_response(
                     'killer_gaming.html',
-                    {'role': r_name, 'user':user, 'game_status' : ROOM_STATUS[game_status], 'role_status': ROLE_STATUS_NAME(role_status)})
+                    {'role': r_name,
+                     'user':user, 'game_status' : ROOM_STATUS[game_status],
+                     'role_status': ROLE_STATUS_NAME[role_status]})
         else:
             return  HttpResponseRedirect('/phone/role/')
     except:
@@ -276,12 +281,15 @@ def check_people(request):
                         {
                             'role': r_name,
                             'user':user, 'game_status' : ROOM_STATUS[game_status],
-                            'role_status': ROLE_STATUS_NAME(role_status),
+                            'role_status': ROLE_STATUS_NAME[role_status],
                             'error':result})
             else:
                 return render_to_response(
                     'witch_gaming.html',
-                    {'role': r_name, 'user':user, 'game_status' : ROOM_STATUS[game_status], 'role_status': ROLE_STATUS_NAME(role_status)})
+                    {'role': r_name,
+                     'user':user,
+                     'game_status' : ROOM_STATUS[game_status],
+                     'role_status': ROLE_STATUS_NAME[role_status]})
         else:
             return  HttpResponseRedirect('/phone/role/')
     except:
@@ -298,11 +306,16 @@ def rescue(request):
                # TODO 救人
                 return render_to_response(
                         'witch_gaming.html',
-                        {'role': r_name, 'user':user, 'game_status' : ROOM_STATUS[game_status], 'role_status':ROLE_STATUS_NAME(role_status)})
+                        {'role': r_name,
+                         'user':user, 'game_status' : ROOM_STATUS[game_status],
+                         'role_status':ROLE_STATUS_NAME[role_status]})
             else:
                 return render_to_response(
                     'witch_gaming.html',
-                    {'role': r_name, 'user':user, 'game_status' : ROOM_STATUS[game_status], 'role_status':ROLE_STATUS_NAME(role_status)})
+                    {'role': r_name,
+                     'user':user,
+                     'game_status' : ROOM_STATUS[game_status],
+                     'role_status':ROLE_STATUS_NAME[role_status]})
         else:
             return  HttpResponseRedirect('/phone/role/')
     except:
