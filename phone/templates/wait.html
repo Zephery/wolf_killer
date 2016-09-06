@@ -1,0 +1,29 @@
+<html>
+<head>
+  <title>狼人杀法官助手</title>
+</head>
+<body>
+  <h3>狼人杀法官助手</h3>
+  {% for item in error %}
+    <p style="color:red;">{{item}}</p>
+  {% endfor %}
+  房间号：{{room_num}}
+  <br><br>
+  房间状态:{{room_status|default:"等待中"}}
+  <br><br>
+  当前用户：{{ user|default:"nothing" }}
+  <br><br>
+  房间中用户：{% for item in other_user %}
+     {{item}}
+  {% endfor %}
+  <br><br>
+  当前房间人数： {{usernum | default:"1"}}
+  <br><br>
+  <input type="submit"  value="开始游戏" onclick="location.href='/phone/start/'">
+  <input type="submit"  value="刷新" onclick="location.href='/phone/index/'">
+  <br>
+  <input type="submit"  value="退出" onclick="location.href='/phone/exit/'">
+
+
+</body>
+</html>

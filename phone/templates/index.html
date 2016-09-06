@@ -3,7 +3,7 @@
   <title>狼人杀法官助手</title>
 </head>
 <body>
-  <h2>狼人杀法官助手</h2>
+  <h3>狼人杀法官助手</h3>
   {% for item in error %}
     <p style="color:red;">{{item}}</p>
   {% endfor %}
@@ -12,12 +12,10 @@
   当前用户：{{ user|default:"nothing" }}
   <br><br>
 
-  <form action="phone/create_room/" method="get">
-    <input type="button" value="创建房间">
-    </form>
+    <input type="submit"  value="创建房间" onclick="location.href='/phone/create_room'"><br><br>
 
   <form action="phone/join_room/" method="post">
-      <input type="button" value="加入房间">
+      <input type="submit" value="加入房间">
       <input type="text" name="room_num">
     </form>
 

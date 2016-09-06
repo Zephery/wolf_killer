@@ -1,13 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title></title>
+  <title>狼人杀法官助手</title>
 </head>
 <body>
-    <from action="/join/" method="get">
-        <input type="text", name="join">
-        <input type="submit" value="加入游戏">
-    </from>
+  <h3>狼人杀法官助手-创建房间</h3>
+  {% for item in error %}
+    <p style="color:red;">{{item}}</p>
+  {% endfor %}
+
+    <br>
+    当前用户：{{ user|default:"nothing" }}
+    <br><br>
+
+  <form action="" method="post">
+    <table>
+      {{ form.as_table }}
+    </table>
+      <input type="submit" value="提交" name="create_room">
+    </form>
+
 </body>
 </html>

@@ -23,14 +23,22 @@ class Room(models.Model):
 
 class Game(models.Model):
     # 游戏有谁，房主是谁，当期有多少人
+    room = models.ForeignKey(Room, verbose_name=u'对应房间')
     current_headcount = models.IntegerField(verbose_name=u'当前房间人数', default=1)
     status = models.IntegerField(verbose_name=u'房间状态', default=RoomStatus.WAIT)
-    master = models.ForeignKey(User, verbose_name=u'房主', null=False)
+    master = models.ForeignKey(User, verbose_name=u'房主', related_name='user_game', unique=False)
+    kill = models.IntegerField(verbose_name=u'杀死的人', null=True)
+    killer_vote_num = models.IntegerField(verbose_name=u'杀手已投票', default=0)
+    rescue = models.IntegerField(verbose_name=u'救人', null=True)
+    poison_people = models.IntegerField(verbose_name=u'毒人', null=True)
 
+
+# 房间 玩家列表
 class Identity(models.Model):
-    game = models.ForeignKey(Game, verbose_name=u'对应游戏')
-    user = models.ForeignKey(User, verbose_name=u'对应的用户')
-    role = models.IntegerField(verbose_name=u'角色')
+    game = models.OneToOneField(Game, verbose_name=u'对应游戏')
+    user = models.OneToOneField(User, verbose_name=u'对应的用户')
+    role = models.IntegerField(verbose_name=u'角色', null=True)
+    status = models.IntegerField(verbose_name=u'玩家状态', null=True)
 
 
 

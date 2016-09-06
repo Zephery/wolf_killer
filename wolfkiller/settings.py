@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'wechat',
     'phone',
-    'bootstrap_toolkit',
 ]
 
 MIDDLEWARE = [
@@ -79,10 +78,10 @@ WSGI_APPLICATION = 'wolfkiller.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'WolfKiller',
+        'NAME': 'wolfkiller',
         'USER': 'root',
-        'PASSWORD': 'L&j&X7596',
-        'HOST': '123.207.137.201',
+        'PASSWORD': '123',
+        'HOST': '123.207.114.112',
         'PORT': '3306'
     },
 }
