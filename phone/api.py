@@ -4,6 +4,34 @@ from random import choice
 from models import *
 from type import *
 
+
+def has_prophet(game):
+    game = Game.objects.get(id=game)
+    return game.room.has_prophet
+
+def has_witch(game):
+    game = Game.objects.get(id=game)
+    return game.room.has_witch
+# 删除不在房间的人
+def delete_not_in_room():
+    not_int_game = Identity.objects.filter(game__isnull=True).delete()
+
+# 加入游戏
+def join_room(user, num):
+    try:
+        game = Game.objects.filter(id=num)
+        if game.count() > 0:
+            identity= Identity(user=user,game_id=game[0].id)
+            game[0].current_headcount = game[0].current_headcount+1
+            game[0].save()
+            identity.save()
+            return 1
+        else:
+            return u'无此房间号'
+    except Exception,e:
+        return str(e)
+
+
 # 获取死亡的人
 def get_deth_people(user):
      users = Identity.objects.filter(user=user)
@@ -15,8 +43,13 @@ def get_deth_people(user):
 def check(user,num):
     users = Identity.objects.filter(user=num)
     if users.count()>0:
-        if users[0].role is Role.WOLF:
-            users[0].game.status = RoomStatus.WITCH
+        game = users[0].game
+        if game.room.has_witch:
+            game.status = RoomStatus.WITCH
+        else:
+            game.status = RoomStatus.DAY
+        game.save()
+        if users[0].role == Role.WOLF:
             return u'狼人'
         else:
             return u'好人'
@@ -34,19 +67,20 @@ def rescue_people(user,num):
         return u'救人失败'
 # 杀人
 def kill(user, num):
-    game = Identity.objects.filter(user=user)
-    if game.count()>0:
-        game[0].game.status = RoomStatus.WATCH
-        game[0].kill = int(num)
-        game[0].killer_vote_num +=1
-        game[0].save()
+    identity = Identity.objects.filter(user=user)
+    if identity.count()>0:
+        game = identity[0].game
+        game.status = RoomStatus.WATCH
+        game.kill = int(num)
+        game.killer_vote_num +=1
+        game.save()
         return u'杀人成功'
     else:
         return u'杀人失败'
 
 # 获取房间状态
 def get_room_status(room):
-    obj = Game.objects.filter(room=room)
+    obj = Game.objects.filter(id=room)
     if obj.count()>0:
         return obj[0].status
     else:
@@ -54,12 +88,12 @@ def get_room_status(room):
 
 def is_in_room(user):
     obj = Identity.objects.filter(user=user)
-    if obj[0]:
+    if obj.count()> 0:
         user_list = []
         other_user = Identity.objects.filter(game_id=obj[0].game_id)
         for item in other_user:
             user_list.append(str(item.user.username)+', ')
-        return obj[0].game.current_headcount, obj[0].game.room.id, obj[0].user.username, user_list
+        return obj[0].game.current_headcount, obj[0].game.id, obj[0].user.username, user_list
     else:
         return 0, None, None, None
 

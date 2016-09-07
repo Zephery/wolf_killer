@@ -23,11 +23,12 @@
   {% endfor %}
   <br><br>
 
-  <form>
     {% block content %}
     {% endblock %}
-  </form>
+
   <br><br>
   <input type="submit"  value="刷新" onclick="location.href='/phone/role/'">
+  <br>
+<input type="submit"  value="退出" onclick="location.href='/phone/exit/'">
 </body>
 </html>

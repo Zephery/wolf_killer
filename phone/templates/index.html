@@ -14,10 +14,11 @@
 
     <input type="submit"  value="创建房间" onclick="location.href='/phone/create_room'"><br><br>
 
-  <form action="phone/join_room/" method="post">
-      <input type="submit" value="加入房间">
-      <input type="text" name="room_num">
-    </form>
-
+  <form action="/phone/join_game/" method="post">
+    <table>
+      {{ form.as_table }}
+    </table>
+    <input type="submit" value="加入房间">
+  </form>
 </body>
 </html>

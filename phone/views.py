@@ -25,6 +25,10 @@ class KillerForm(forms.Form):
 class ProphetForm(forms.Form):
     check_name = forms.IntegerField(label=u'验人')
 
+class IndexForm(forms.Form):
+    join_num = forms.IntegerField(label=u'加入房间号')
+
+
 def login(request):
     try:
         request.session['username']
@@ -99,7 +103,9 @@ def register(request):
 # 主页
 def index(request):
     try:
+        delete_not_in_room()
         username = request.session['username']
+        form = IndexForm()
         num, room, user, other = is_in_room(request.user)
         if num:
             # 查看房间状态
@@ -107,9 +113,9 @@ def index(request):
             if room_status in IN_ROOM:
                 return HttpResponseRedirect('/phone/role')
             else:
-                return render_to_response('wait.html' ,{'user':user,'usernum':user,'room_num':room,'other_user':other})
+                return render_to_response('wait.html' ,{'user':user,'usernum':len(other),'room_num':room,'other_user':other})
         else:
-            return render_to_response('index.html' ,{'user':username})
+            return render_to_response('index.html' ,{'user':username, 'form':form})
     except:
         return HttpResponseRedirect('/phone/login/')
 
@@ -152,7 +158,7 @@ def exit_game(request):
         user = request.session['username']
         user_exit(request.user)
         response = HttpResponseRedirect('/phone/login/')
-        # del request.session['username']
+        del request.session['username']
         return response
     except:
         return HttpResponseRedirect('/phone/login/')
@@ -163,7 +169,17 @@ def join_game(request):
         user = request.session['username']
         if request.method == 'POST':
             # 获取到加入的房间号
-            room = 0
+            form = IndexForm(request.POST)
+            if form.is_valid():
+                data = form.cleaned_data
+                join_num = data['join_num']
+                result = join_room(request.user, join_num)
+                if result == 1:
+                    request.session['game'] = join_num
+                    return  HttpResponseRedirect('/phone/index')
+                else:
+                    return  render_to_response('index.html', {'user':user, 'error':[result], 'from':IndexForm()})
+
             # 查看当前用户是否在房间
 
     except:
@@ -178,7 +194,7 @@ def start(request):
         game = Game.objects.get(id=game_id)
         num, room, username, other = is_in_room(request.user)
         error = []
-        if num < game.room.headcount:
+        if len(other) < game.room.headcount:
             error.append(u'房间人数不足'+str(game.room.headcount)+u'人，不能开始游戏')
         else:
             status = start_game(request.session)
@@ -215,11 +231,19 @@ def role(request):
             deth = get_deth_people(request.user)
             return render_to_response(
             'gaming.html',
-            {'deth_people':u'作夜'+str(deth)+u'死亡',
+            {'deth_people':u'昨夜'+str(deth)+u'号玩家死亡,有遗言',
              'role': ROLE_NAME[r], 'user':user,
              'game_status' :ROOM_STATUS[game_status],
              'role_status':ROLE_STATUS_NAME[role_status],
              'other_user':other})
+
+        # TODO 修改为判断其身份然后决定要调用什么
+        elif  r == 0 and game_status == RoomStatus.KILLING:
+            return HttpResponseRedirect('/phone/kill_people/')
+        elif has_witch(room) and r == 3 and game_status == RoomStatus.WITCH:
+            return HttpResponseRedirect('/phone/rescue/')
+        elif has_prophet(room) and r ==2 and game_status == RoomStatus.WATCH:
+            return HttpResponseRedirect('/phone/check_people/')
         else:
             return render_to_response(
             'gaming.html',
@@ -242,25 +266,32 @@ def kill_people(request):
             if request.method == 'POST':
                 form = KillerForm(request.POST)
                 if form.is_valid():
-                    num = form.killed
+                    num =  form.cleaned_data['killed']
                     info = kill(request.user, num)
                     error = [info]
                     return render_to_response(
                         'killer_gaming.html',
                         {
                             'role': r_name,
-                            'user':user, 'game_status' : ROOM_STATUS[game_status],
-                            'role_status':ROLE_STATUS_NAME[role_status],'error':error})
+                            'user':user,
+                            'game_status' : ROOM_STATUS[game_status],
+                            'role_status':ROLE_STATUS_NAME[role_status],
+                            'error':error})
             else:
-
+                form = KillerForm()
+                num, room, username, other = is_in_room(request.user)
                 return render_to_response(
                     'killer_gaming.html',
                     {'role': r_name,
-                     'user':user, 'game_status' : ROOM_STATUS[game_status],
-                     'role_status': ROLE_STATUS_NAME[role_status]})
+                     'user':user,
+                     'game_status' : ROOM_STATUS[game_status],
+                     'role_status': ROLE_STATUS_NAME[role_status],
+                     'form':form,
+                     'other_user':other})
         else:
             return  HttpResponseRedirect('/phone/role/')
-    except:
+    except Exception,e:
+        print(e)
         return HttpResponseRedirect('/phone/index/')
 
 # 验人
@@ -268,28 +299,33 @@ def check_people(request):
     try:
         user = request.session['username']
         r, game_status, role_status = get_role(user)
-        if r == Role.PROPHET and game_status == RoomStatus.WITCH:
+        if r == Role.PROPHET and game_status == RoomStatus.WATCH:
             r_name = ROLE_NAME[r]
             if request.method == 'POST':
                 form = ProphetForm(request.POST)
                 result = []
                 if form.is_valid():
-                    num = form.check_name
+                    num = form.cleaned_data['check_name']
                     result.append(check(user, num))
+                num, room, username, other = is_in_room(request.user)
                 return render_to_response(
                         'prophet_gaming.html',
                         {
                             'role': r_name,
                             'user':user, 'game_status' : ROOM_STATUS[game_status],
                             'role_status': ROLE_STATUS_NAME[role_status],
-                            'error':result})
+                            'error':result,
+                            'other_user':other})
             else:
+                num, room, username, other = is_in_room(request.user)
                 return render_to_response(
-                    'witch_gaming.html',
+                    'prophet_gaming.html',
                     {'role': r_name,
                      'user':user,
                      'game_status' : ROOM_STATUS[game_status],
-                     'role_status': ROLE_STATUS_NAME[role_status]})
+                     'role_status': ROLE_STATUS_NAME[role_status],
+                     'form':ProphetForm(),
+                     'other_user':other})
         else:
             return  HttpResponseRedirect('/phone/role/')
     except:
