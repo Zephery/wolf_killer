@@ -52,7 +52,7 @@ def login(request):
                 error.append(u'请输入账号/密码')
         else:
             form = LoginForm()
-    return render_to_response('login.html', {'error':error,'form':form}, context_instance=RequestContext(request))
+    return render_to_response('login.html', {'error':error,'form':form})
 
 @csrf_exempt
 def login_validate(req, user, pwd):
@@ -205,21 +205,24 @@ def start(request):
         if len(other) < game.room.headcount:
             error.append(u'房间人数不足'+str(game.room.headcount)+u'人，不能开始游戏')
         else:
-            status = start_game(request.session)
-            if status == -1:
-                error.append(u'房间人数错误!')
-                return render_to_response(
-                    'wait.html',
-                    {'user':username,'usernum':num,'room_num':room,'other_user':other, 'error':error})
+            if game.status is not RoomStatus.WAIT:
+                status = start_game(request.session)
+                if status == -1:
+                    error.append(u'房间人数错误!')
+                    return render_to_response(
+                        'wait.html',
+                        {'user':username,'usernum':num,'room_num':room,'other_user':other, 'error':error})
 
-            elif status ==  1:
-                return HttpResponseRedirect('/phone/role')
+                elif status ==  1:
+                    return HttpResponseRedirect('/phone/role')
 
+                else:
+                    error.append(status)
+                    return render_to_response(
+                        'wait.html' ,
+                        {'user':username,'usernum':num,'room_num':room,'other_user':other, 'error':error})
             else:
-                error.append(status)
-                return render_to_response(
-                    'wait.html' ,
-                    {'user':username,'usernum':num,'room_num':room,'other_user':other, 'error':error})
+                return HttpResponseRedirect('/phone/role')
 
         return render_to_response(
             'wait.html' ,

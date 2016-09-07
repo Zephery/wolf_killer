@@ -19,11 +19,13 @@ def delete_not_in_room():
 # 加入游戏
 def join_room(user, num):
     try:
-        game = Game.objects.filter(id=num)
-        if game.count() > 0:
-            identity= Identity(user=user,game_id=game[0].id)
-            game[0].current_headcount = game[0].current_headcount+1
-            game[0].save()
+        games = Game.objects.filter(id=num)
+        if games.count() > 0:
+            identity= Identity(user=user,game_id=games[0].id)
+            game = games[0]
+            current_headcount = game.current_headcount
+            game.current_headcount = current_headcount+1
+            game.save()
             identity.save()
             return 1
         else:
@@ -109,40 +111,32 @@ def get_role(user):
 def start_game(session):
     game_id = session['game']
     try:
-        game = Game.objects.filter(id=game_id)
-        if game[0].status == RoomStatus.WAIT:
-            # 人数相同
-            if game[0].current_headcount == game[0].room.headcount:
-                # 更改房间状态
-                game[0].status == RoomStatus.KILLING
-                # 分配身份, 房间中人数不会超过
-                room = game[0].room
-                role_list = []
-                for i in range(room.wolf): role_list.append(0)
-                for i in range(room.civilian): role_list.append(1)
-                if room.has_prophet: role_list.append(2)
-                if room.has_witch: role_list.append(3)
-                if room.has_idiot: role_list.append(4)
-                if room.has_hunter: role_list.append(5)
-                if room.has_tree: role_list.append(6)
-                room.save()
-                game[0].save()
+        games = Game.objects.filter(id=game_id)
+        if games[0].status == RoomStatus.WAIT:
+            # 更改房间状态
+            game = games[0]
+            game.status = RoomStatus.KILLING
+            # 分配身份, 房间中人数不会超过
+            room = game.room
+            role_list = []
+            for i in range(room.wolf): role_list.append(0)
+            for i in range(room .civilian): role_list.append(1)
+            if room.has_prophet: role_list.append(2)
+            if room.has_witch: role_list.append(3)
+            if room.has_idiot: role_list.append(4)
+            if room.has_hunter: role_list.append(5)
+            if room.has_tree: role_list.append(6)
+            room.save()
+            game.save()
 
-                users = Identity.objects.filter(game=game[0])
-                if users.count() is not int(game[0].current_headcount):
-                    # 人数错误
-                    return -1
-                else:
-                    for user in users:
-                        user.role = choice(role_list)
-                        user.status = PlayerStatus.ALIVE
-                        role_list.remove(user.role)
-                        user.save()
-                    # 分配角色成功
-                    return 1
-            else:
-                # 人数错误
-                return -1
+            users = Identity.objects.filter(game=game)
+            for user in users:
+                user.role = choice(role_list)
+                user.status = PlayerStatus.ALIVE
+                role_list.remove(user.role)
+                user.save()
+            # 分配角色成功
+            return 1
         else:
             # 房间状态错误
             return -2
