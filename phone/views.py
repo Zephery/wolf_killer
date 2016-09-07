@@ -5,7 +5,7 @@ from django.template.context import RequestContext
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse, HttpResponseRedirect
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_exempt
 
 from api import *
 
@@ -29,7 +29,7 @@ class ProphetForm(forms.Form):
 class IndexForm(forms.Form):
     join_num = forms.IntegerField(label=u'加入房间号')
 
-@csrf_protect
+@csrf_exempt
 def login(request):
     try:
         request.session['username']
@@ -54,7 +54,7 @@ def login(request):
             form = LoginForm()
     return render_to_response('login.html', {'error':error,'form':form}, context_instance=RequestContext(request))
 
-@csrf_protect
+@csrf_exempt
 def login_validate(req, user, pwd):
     rtvalue = False
     user = auth.authenticate(username=user, password=pwd)
@@ -71,7 +71,7 @@ class RegisterForm(forms.Form):
     def pwd_validate(self,p1,p2):
         return p1==p2
 
-@csrf_protect
+@csrf_exempt
 def register(request):
     error=[]
     if request.method == 'POST':
@@ -104,7 +104,7 @@ def register(request):
 
 
 # 主页
-@csrf_protect
+@csrf_exempt
 def index(request):
     try:
         delete_not_in_room()
@@ -130,7 +130,7 @@ class RoomForm(forms.Form):
     win = forms.ChoiceField(label=u'胜利条件',choices=((u'0', u'屠城'),(u'1', u'屠边')))
 
 # 创建房间
-@csrf_protect
+@csrf_exempt
 def create_room(request):
     error = []
     user = request.session['username']
@@ -158,7 +158,7 @@ def create_room(request):
 
 
 #退出游戏
-@csrf_protect
+@csrf_exempt
 def exit_game(request):
     try:
         user = request.session['username']
@@ -170,7 +170,7 @@ def exit_game(request):
         return HttpResponseRedirect('/phone/login/')
 
 # 加入游戏
-@csrf_protect
+@csrf_exempt
 def join_game(request):
     try:
         user = request.session['username']
@@ -193,7 +193,7 @@ def join_game(request):
         return HttpResponseRedirect('/phone/login/')
 
 # 开始游戏
-@csrf_protect
+@csrf_exempt
 def start(request):
     # 判断当前房间人数
     error = []
@@ -229,7 +229,7 @@ def start(request):
     pass
 
 # 获取角色
-@csrf_protect
+@csrf_exempt
 def role(request):
     try:
         user = request.session['username']
@@ -266,7 +266,7 @@ def role(request):
         return HttpResponseRedirect('/phone/index/')
 
 # 杀人
-@csrf_protect
+@csrf_exempt
 def kill_people(request):
     try:
         user = request.session['username']
@@ -305,7 +305,7 @@ def kill_people(request):
         return HttpResponseRedirect('/phone/index/')
 
 # 验人
-@csrf_protect
+@csrf_exempt
 def check_people(request):
     try:
         user = request.session['username']
@@ -343,7 +343,7 @@ def check_people(request):
         return HttpResponseRedirect('/phone/indexn/')
 
 # 救人
-@csrf_protect
+@csrf_exempt
 def rescue(request):
     try:
         user = request.session['username']
