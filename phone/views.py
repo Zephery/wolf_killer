@@ -1,39 +1,30 @@
 #coding:utf-8
-from django import forms
-from django.shortcuts import render_to_response, render
-from django.template.context import RequestContext
+from django.shortcuts import render_to_response
+
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 
 from api import *
+from forms import *
 
-DEFALT_GOD = (
-    ('2', '预言家'),
-    ('3', '女巫'),
-    ('4', '白痴'),
-    ('5', '猎人'),
-    ('6', '树人')
-)
-class LoginForm(forms.Form):
-    username = forms.CharField(label=u'用户名')
-    password = forms.CharField(label=u'密码', widget=forms.PasswordInput)
 
-class KillerForm(forms.Form):
-    killed = forms.IntegerField(label=u'杀死谁：')
-
-class ProphetForm(forms.Form):
-    check_name = forms.IntegerField(label=u'验人')
-
-class IndexForm(forms.Form):
-    join_num = forms.IntegerField(label=u'加入房间号')
+@csrf_exempt
+def login_validate(req, user, pwd):
+    rtvalue = False
+    user = auth.authenticate(username=user, password=pwd)
+    if user is not None:
+        if user.is_active:
+            auth.login(req, user)
+            return True
+    return rtvalue
 
 @csrf_exempt
 def login(request):
     try:
         request.session['username']
-        return  HttpResponseRedirect('/phone/index')
+        return  index(request)
     except:
         error = []
         if request.method == 'POST':
@@ -54,22 +45,27 @@ def login(request):
             form = LoginForm()
     return render_to_response('login.html', {'error':error,'form':form})
 
-@csrf_exempt
-def login_validate(req, user, pwd):
-    rtvalue = False
-    user = auth.authenticate(username=user, password=pwd)
-    if user is not None:
-        if user.is_active:
-            auth.login(req, user)
-            return True
-    return rtvalue
 
-class RegisterForm(forms.Form):
-    username = forms.CharField(label="用户名/账号")
-    password = forms.CharField(label="密码",widget=forms.PasswordInput)
-    password2= forms.CharField(label='确认密码',widget=forms.PasswordInput)
-    def pwd_validate(self,p1,p2):
-        return p1==p2
+# 主页
+@csrf_exempt
+def index(request):
+    try:
+        delete_not_in_room()
+        username = request.session['username']
+        form = IndexForm()
+        num, room, user, other = is_in_room(request.user)
+        if num:
+            # 查看房间状态
+            room_status = get_room_status(room)
+            if room_status in IN_ROOM:
+                return role(request)
+            else:
+                return render_to_response('wait.html' ,{'user':user,'usernum':len(other),'room_num':room,'other_user':other})
+        else:
+            return render_to_response('index.html' ,{'user':username, 'form':form})
+    except:
+        return login(request)
+
 
 @csrf_exempt
 def register(request):
@@ -102,32 +98,6 @@ def register(request):
         form = RegisterForm()
     return render_to_response('register.html',{'form':form,'error':error})
 
-
-# 主页
-@csrf_exempt
-def index(request):
-    try:
-        delete_not_in_room()
-        username = request.session['username']
-        form = IndexForm()
-        num, room, user, other = is_in_room(request.user)
-        if num:
-            # 查看房间状态
-            room_status = get_room_status(room)
-            if room_status in IN_ROOM:
-                return HttpResponseRedirect('/phone/role')
-            else:
-                return render_to_response('wait.html' ,{'user':user,'usernum':len(other),'room_num':room,'other_user':other})
-        else:
-            return render_to_response('index.html' ,{'user':username, 'form':form})
-    except:
-        return HttpResponseRedirect('/phone/login/')
-
-class RoomForm(forms.Form):
-    wolf = forms.IntegerField(label=u'狼人数量')
-    civilian = forms.IntegerField(label=u'平民数量')
-    god = forms.MultipleChoiceField(label=u'神', choices=DEFALT_GOD, widget=forms.CheckboxSelectMultiple())
-    win = forms.ChoiceField(label=u'胜利条件',choices=((u'0', u'屠城'),(u'1', u'屠边')))
 
 # 创建房间
 @csrf_exempt
@@ -163,11 +133,11 @@ def exit_game(request):
     try:
         user = request.session['username']
         user_exit(request.user)
-        response = HttpResponseRedirect('/phone/login/')
         del request.session['username']
-        return response
+        return login(request)
     except:
-        return HttpResponseRedirect('/phone/login/')
+        return login(request)
+
 
 # 加入游戏
 @csrf_exempt
@@ -181,16 +151,17 @@ def join_game(request):
                 data = form.cleaned_data
                 join_num = data['join_num']
                 result = join_room(request.user, join_num)
+                num, room, user, other = is_in_room(request.user)
                 if result == 1:
                     request.session['game'] = join_num
-                    return  HttpResponseRedirect('/phone/index')
+                    return render_to_response('wait.html' ,{'user':user,'usernum':len(other),'room_num':room,'other_user':other})
                 else:
                     return  render_to_response('index.html', {'user':user, 'error':[result], 'from':IndexForm()})
-
-            # 查看当前用户是否在房间
-
+            else:
+                return  render_to_response('index.html', {'user':user, 'error':[u'数据错误'], 'from':IndexForm()})
     except:
-        return HttpResponseRedirect('/phone/login/')
+        return login(request)
+
 
 # 开始游戏
 @csrf_exempt
@@ -208,13 +179,14 @@ def start(request):
             if game.status is not RoomStatus.WAIT:
                 status = start_game(request.session)
                 if status == -1:
+
                     error.append(u'房间人数错误!')
                     return render_to_response(
                         'wait.html',
                         {'user':username,'usernum':num,'room_num':room,'other_user':other, 'error':error})
 
                 elif status ==  1:
-                    return HttpResponseRedirect('/phone/role')
+                    return role(request)
 
                 else:
                     error.append(status)
@@ -222,14 +194,14 @@ def start(request):
                         'wait.html' ,
                         {'user':username,'usernum':num,'room_num':room,'other_user':other, 'error':error})
             else:
-                return HttpResponseRedirect('/phone/role')
+                return role(request)
 
         return render_to_response(
             'wait.html' ,
             {'user':username,'usernum':num,'room_num':room,'other_user':other, 'error':error})
     except:
-        return HttpResponseRedirect('/phone/login/')
-    pass
+        return login(request)
+
 
 # 获取角色
 @csrf_exempt
@@ -250,12 +222,16 @@ def role(request):
              'other_user':other})
 
         # TODO 修改为判断其身份然后决定要调用什么
+
         elif  r == 0 and game_status == RoomStatus.KILLING:
-            return HttpResponseRedirect('/phone/kill_people/')
+            return kill_people(request)
+
         elif has_witch(room) and r == 3 and game_status == RoomStatus.WITCH:
-            return HttpResponseRedirect('/phone/rescue/')
+            return rescue(request)
+
         elif has_prophet(room) and r ==2 and game_status == RoomStatus.WATCH:
-            return HttpResponseRedirect('/phone/check_people/')
+            return check_people(request)
+
         else:
             return render_to_response(
             'gaming.html',
@@ -266,7 +242,7 @@ def role(request):
 
     except Exception,e:
         print(e)
-        return HttpResponseRedirect('/phone/index/')
+        return login(request)
 
 # 杀人
 @csrf_exempt
@@ -302,10 +278,11 @@ def kill_people(request):
                      'form':form,
                      'other_user':other})
         else:
-            return  HttpResponseRedirect('/phone/role/')
+            return  role(request)
     except Exception,e:
         print(e)
-        return HttpResponseRedirect('/phone/index/')
+        return login(request)
+
 
 # 验人
 @csrf_exempt
@@ -341,9 +318,9 @@ def check_people(request):
                      'form':ProphetForm(),
                      'other_user':other})
         else:
-            return  HttpResponseRedirect('/phone/role/')
+            return role(request)
     except:
-        return HttpResponseRedirect('/phone/indexn/')
+        return login(request)
 
 # 救人
 @csrf_exempt
@@ -368,9 +345,10 @@ def rescue(request):
                      'game_status' : ROOM_STATUS[game_status],
                      'role_status':ROLE_STATUS_NAME[role_status]})
         else:
-            return  HttpResponseRedirect('/phone/role/')
+            return  role(request)
     except:
-        return HttpResponseRedirect('/phone/index/')
+        return login(request)
+
 
 # 毒人
 def poison_people(request):
@@ -378,7 +356,7 @@ def poison_people(request):
         user = request.session['username']
 
     except:
-        return HttpResponseRedirect('/phone/index/')
+        return login(request)
 
 
 # 昨夜情况
@@ -387,4 +365,5 @@ def yesternight(request):
         user = request.session['username']
 
     except:
-        return HttpResponseRedirect('/phone/index/')
+        return login(request)
+
