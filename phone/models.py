@@ -28,7 +28,7 @@ class Game(models.Model):
     status = models.IntegerField(verbose_name=u'房间状态')
     master = models.ForeignKey(User, verbose_name=u'房主', related_name='user_game', unique=False)
     kill = models.IntegerField(verbose_name=u'杀死的人', null=True)
-    killer_vote_num = models.IntegerField(verbose_name=u'杀手已投票', default=0)
+    killer_vote_num = models.IntegerField(verbose_name=u'杀手已投票')
     rescue = models.IntegerField(verbose_name=u'救人', null=True)
     poison_people = models.IntegerField(verbose_name=u'毒人', null=True)
 

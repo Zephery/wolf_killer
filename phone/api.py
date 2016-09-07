@@ -21,8 +21,11 @@ def join_room(user, num):
     try:
         games = Game.objects.filter(id=num)
         if games.count() > 0:
-            identity= Identity(user=user,game_id=games[0].id)
+            # TODO 先判断房间是否有人。。。
             game = games[0]
+            if int(game.status) is not RoomStatus.WAIT:
+                return u'该房间已经开始'
+            identity= Identity(user=user,game_id=games[0].id)
             current_headcount = game.current_headcount
             game.current_headcount = current_headcount+1
             game.save()
@@ -72,9 +75,11 @@ def kill(user, num):
     identity = Identity.objects.filter(user=user)
     if identity.count()>0:
         game = identity[0].game
-        game.status = RoomStatus.WATCH
+
         game.kill = int(num)
-        game.killer_vote_num +=1
+        game.killer_vote_num += 1
+        if game.room.wolf == game.killer_vote_num:
+            game.status = RoomStatus.WATCH
         game.save()
         return u'杀人成功'
     else:
@@ -173,7 +178,7 @@ def user_create_room(user, wolf, civilian, god, win):
                 has_tree=god_bool[4],
                 win_model=int(win))
             user_exit(user)  # 退出所有的房间
-            game, _ = Game.objects.get_or_create(room=room, current_headcount=1, master=user, status=RoomStatus.WAIT)
+            game, _ = Game.objects.get_or_create(room=room, current_headcount=1, master=user, status=RoomStatus.WAIT, killer_vote_num=0)
             if not _:
                 return -2, u'用户已在房间'+str(game.room.id)
             identity = Identity.objects.create(game=game, user=user)
