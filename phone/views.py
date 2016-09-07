@@ -215,7 +215,7 @@ def role(request):
             deth = get_deth_people(request.user)
             return render_to_response(
             'gaming.html',
-            {'deth_people':u'昨夜'+str(deth)+u'号玩家死亡,有遗言',
+            {'deth_people':u'昨夜，玩家 “'+str(deth)+u'”死亡,有遗言',
              'role': ROLE_NAME[r], 'user':user,
              'game_status' :ROOM_STATUS[game_status],
              'role_status':ROLE_STATUS_NAME[role_status],
@@ -296,8 +296,8 @@ def check_people(request):
                 form = ProphetForm(request.POST)
                 result = []
                 if form.is_valid():
-                    num = form.cleaned_data['check_name']
-                    result.append(check(user, num))
+                    check_num = form.cleaned_data['check_name']
+                    result.append(check(user, check_num))
                 num, room, username, other = is_in_room(request.user)
                 return render_to_response(
                         'prophet_gaming.html',
@@ -328,6 +328,39 @@ def rescue(request):
     try:
         user = request.session['username']
         r, game_status, role_status = get_role(user)
+        num, room, user, other = is_in_room(request.user)
+        if r == Role.WITCH and game_status == RoomStatus.WITCH:
+            r_name = ROLE_NAME[r]
+            if request.method == 'POST':
+               # TODO 救人
+                return render_to_response(
+                        'witch_gaming.html',
+                        {'role': r_name,
+                         'user':user, 'game_status' : ROOM_STATUS[game_status],
+                         'role_status':ROLE_STATUS_NAME[role_status]})
+            else:
+                good, bad = drug(room)
+                if good: goodForm=RescueForm() or None
+                if bad : badForm=PoisonForm() or None
+                return render_to_response(
+                    'witch_gaming.html',
+                    {'role': r_name,
+                     'user':user,
+                     'game_status' : ROOM_STATUS[game_status],
+                     'role_status':ROLE_STATUS_NAME[role_status],
+                     'form1': goodForm,
+                     'form2':badForm})
+        else:
+            return  role(request)
+    except:
+        return login(request)
+
+
+# 毒人
+def poison_people(request):
+    try:
+        user = request.session['username']
+        r, game_status, role_status = get_role(user)
         if r == Role.WITCH and game_status == RoomStatus.WITCH:
             r_name = ROLE_NAME[r]
             if request.method == 'POST':
@@ -348,16 +381,6 @@ def rescue(request):
             return  role(request)
     except:
         return login(request)
-
-
-# 毒人
-def poison_people(request):
-    try:
-        user = request.session['username']
-
-    except:
-        return login(request)
-
 
 # 昨夜情况
 def yesternight(request):

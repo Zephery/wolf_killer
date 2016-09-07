@@ -8,10 +8,10 @@ class LoginForm(forms.Form):
     password = forms.CharField(label=u'密码', widget=forms.PasswordInput)
 
 class KillerForm(forms.Form):
-    killed = forms.IntegerField(label=u'杀死谁：')
+    killed = forms.CharField(label=u'杀死谁：')
 
 class ProphetForm(forms.Form):
-    check_name = forms.IntegerField(label=u'验人')
+    check_name = forms.CharField(label=u'验人')
 
 class IndexForm(forms.Form):
     join_num = forms.IntegerField(label=u'加入房间号')
@@ -29,4 +29,9 @@ class RoomForm(forms.Form):
     god = forms.MultipleChoiceField(label=u'神', choices=DEFALT_GOD, widget=forms.CheckboxSelectMultiple())
     win = forms.ChoiceField(label=u'胜利条件',choices=((u'0', u'屠城'),(u'1', u'屠边')))
 
+class RescueForm(forms.Form):
+    rescue = forms.CharField(label=u'救人号码')
+
+class PoisonForm(forms.Form):
+    num = forms.CharField(label=u'毒人号码')
 

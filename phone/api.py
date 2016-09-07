@@ -25,7 +25,7 @@ def join_room(user, num):
             game = games[0]
             if int(game.status) is not RoomStatus.WAIT:
                 return u'该房间已经开始'
-            identity= Identity(user=user,game_id=games[0].id)
+            identity= Identity(user=user, game_id=games[0].id)
             current_headcount = game.current_headcount
             game.current_headcount = current_headcount+1
             game.save()
@@ -39,14 +39,14 @@ def join_room(user, num):
 
 # 获取死亡的人
 def get_deth_people(user):
-     users = Identity.objects.filter(user=user)
+     users = Identity.objects.filter(user__username=user)
      if users.count() > 0:
          return users[0].game.kill
      else:
          return -1
 # 验人
-def check(user,num):
-    users = Identity.objects.filter(user=num)
+def check(user, check_num):
+    users = Identity.objects.filter(user__username=check_num)
     if users.count()>0:
         game = users[0].game
         if game.room.has_witch:
@@ -62,7 +62,7 @@ def check(user,num):
         return u'验人失败'
 # 救人
 def rescue_people(user,num):
-    game = Identity.objects.filter(user=user)
+    game = Identity.objects.filter(user__username=user)
     if game.count()>0:
         game[0].game.status = RoomStatus.DAY
         game[0].rescue = int(num)
@@ -72,14 +72,13 @@ def rescue_people(user,num):
         return u'救人失败'
 # 杀人
 def kill(user, num):
-    identity = Identity.objects.filter(user=user)
+    identity = Identity.objects.filter(user__username=user)
     if identity.count()>0:
         game = identity[0].game
 
-        game.kill = int(num)
+        game.kill = num
         game.killer_vote_num += 1
-        if game.room.wolf == game.killer_vote_num:
-            game.status = RoomStatus.WATCH
+        game.status = RoomStatus.WATCH
         game.save()
         return u'杀人成功'
     else:
@@ -94,7 +93,7 @@ def get_room_status(room):
         return -1
 
 def is_in_room(user):
-    obj = Identity.objects.filter(user=user)
+    obj = Identity.objects.filter(user__username=user)
     if obj.count()> 0:
         user_list = []
         other_user = Identity.objects.filter(game_id=obj[0].game_id)
@@ -106,7 +105,7 @@ def is_in_room(user):
 
 # 获取角色
 def get_role(user):
-    users = Identity.objects.filter(user=user)
+    users = Identity.objects.filter(user__username=user)
     if users.count() >0:
         return users[0].role, users[0].game.status, users[0].status
     else:
@@ -155,7 +154,7 @@ def user_create_room(user, wolf, civilian, god, win):
 
     for num in god:
         god_list.append(int(num))
-    identity = Identity.objects.filter(user=user)
+    identity = Identity.objects.filter(user__username=user)
     if identity.count() > 0:
         # 用户在房间中
         return -2, u'用户已在房间'+str(identity.room)
@@ -191,9 +190,32 @@ def user_create_room(user, wolf, civilian, god, win):
 
 # 退出房间,游戏
 def user_exit(user):
-    game = Game.objects.filter(master=user)
+    game = Game.objects.filter(master__username=user)
     if game.count() > 0:
         for item in game: item.delete()
-    id = Identity.objects.filter(user=user)
+    id = Identity.objects.filter(user__username=user)
     if id.count() >0 :
         for item in id: item.delete()
+
+
+# 查看药情况
+def drug(game):
+    games = Game.objects.filter(id=game)
+    good = True
+    bad = True
+    if games.count>0:
+        if games[0].rescue:
+            good = False
+        if games[0].poison_people:
+            bad = False
+    return good, bad
+
+
+# 女巫救人
+def witch_rescuse(user):
+    pass
+
+
+# 女巫毒人
+def witch_poison(user):
+    pass
