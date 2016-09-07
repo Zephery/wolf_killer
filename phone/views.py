@@ -52,7 +52,7 @@ def login(request):
                 error.append(u'请输入账号/密码')
         else:
             form = LoginForm()
-    return render_to_response('login.html', {'error':error,'form':form})
+    return render(request, 'login.html', {'error':error,'form':form})
 
 @csrf_protect
 def login_validate(req, user, pwd):
@@ -117,9 +117,9 @@ def index(request):
             if room_status in IN_ROOM:
                 return HttpResponseRedirect('/phone/role')
             else:
-                return render_to_response('wait.html' ,{'user':user,'usernum':len(other),'room_num':room,'other_user':other})
+                return render(request, 'wait.html' ,{'user':user,'usernum':len(other),'room_num':room,'other_user':other})
         else:
-            return render_to_response('index.html' ,{'user':username, 'form':form})
+            return render(request, 'index.html' ,{'user':username, 'form':form})
     except:
         return HttpResponseRedirect('/phone/login/')
 
