@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from api import *
 from forms import *
 
-
+#摇摇sb
 @csrf_exempt
 def login_validate(req, user, pwd):
     rtvalue = False
